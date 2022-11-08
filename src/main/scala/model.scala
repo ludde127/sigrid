@@ -8,10 +8,18 @@ case class User(name: String, number: Int, var timeStartedWaiting: Option[Date] 
     id
   }
 
+  override def equals(x: Any): Boolean = 
+    x match {
+      case user: User => user.name == name && user.number == number
+      case _ => false
+    }
+
+
   def joinedQueue(): Unit = 
     timeStartedWaiting = Some(Date.now())
   def leaveQueue(): Unit = 
     timeStartedWaiting = None
+
 
   def timeWaited(): Option[Duration] = {
     if (timeStartedWaiting.isEmpty) {
