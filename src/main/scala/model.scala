@@ -1,8 +1,28 @@
-case class User(name: String, number: Int){
+import java.time.Duration
+
+case class User(name: String, number: Int, var timeStartedWaiting: Option[Date] = None){
   require(name == User.validName(name), s"invalid user name: $name")
   require(number > 0, s"invalid user number: $number")
   val id = s"$name-$number"
-  override def toString = id
+  override def toString: String = {
+    id
+  }
+
+  def joinedQueue(): Unit = 
+    timeStartedWaiting = Some(Date.now())
+  def leaveQueue(): Unit = 
+    timeStartedWaiting = None
+
+  def timeWaited(): Option[Duration] = {
+    if (timeStartedWaiting.isEmpty) {
+      None
+    } else {
+      Some(Duration.between(timeStartedWaiting.get.dateTime, Date.now().dateTime))
+    }
+  }
+
+  def waitedMinSafe: Double = timeWaited().getOrElse(Duration.ofMinutes(0)).toSeconds()/60.0
+
 }
 
 object User {
@@ -65,13 +85,13 @@ case class Room(
   created: Date = Date.now(),
 ){
   def wantHelp(u: User): Room = copy(
-    helpQueue = if (helpQueue.contains(u)) helpQueue else helpQueue :+ u,
+    helpQueue = if (helpQueue.contains(u)) helpQueue else {u.joinedQueue(); helpQueue :+ u},
     approvalQueue = approvalQueue.filterNot(_ == u)
   )
 
   def wantApproval(u: User): Room = copy(
     helpQueue = helpQueue.filterNot(_ == u),
-    approvalQueue = if (approvalQueue.contains(u)) approvalQueue else approvalQueue :+ u
+    approvalQueue = if (approvalQueue.contains(u)) approvalQueue else {u.joinedQueue(); approvalQueue :+ u}
   )
 
   def working(u: User): Room = copy(
@@ -86,6 +106,19 @@ case class Room(
     approvalQueue = approvalQueue.filterNot(_ == u),
     supervisors = supervisors - u
   )
+  
+  def queueWithTimer(vector: Vector[User]): String = {
+      if (vector.size >= 1) {
+        val headWaited = f"(${vector.head.id}: Väntat ${(vector.head.waitedMinSafe*10).toInt/10.0} min) "
+        if (vector.size > 1) {
+          headWaited + vector.tail.mkString(", ")
+        } else {
+          headWaited
+        }
+      } else {
+        ""
+      }
+    }
 
   def clearHelpQueue(): Room = copy(helpQueue = Vector())
 
