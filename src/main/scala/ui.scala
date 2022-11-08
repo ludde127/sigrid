@@ -102,14 +102,13 @@ object ui {
     <p>  $course  &nbsp; 
       <b>${r.name}:</b> $n student${if (n != 1) "er" else ""}, 
       handledare ${r.supervisors.map(_.id)} <br>
-
       &nbsp;&nbsp; <i>hjälpkö:</i> 
       ${r.helpQueue.length} 
-      ${r.helpQueue.mkString(",")} <br>
-
+      ${r.queueWithTimer(r.helpQueue)}
+      <br>
       &nbsp;&nbsp; <i>redovkö:</i> 
       ${r.approvalQueue.length} 
-      ${r.approvalQueue.mkString(",")}
+      ${r.queueWithTimer(r.approvalQueue)}
     </p>
     """
   }
